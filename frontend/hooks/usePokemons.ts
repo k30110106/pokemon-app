@@ -1,23 +1,46 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 
-// 1. API 통신 함수: queryKey에서 search 정보를 추출하여 사용합니다.
+interface DebouncedParams {
+  search: string;
+  selectedTypes: string[];
+}
+
+// API 통신 함수: queryKey에서 search 정보를 추출하여 사용합니다.
 const fetchPokemons = async ({ pageParam = 0, queryKey }: any) => {
-  const [_key, search] = queryKey; // queryKey: ["pokemons", search] 에서 값을 분리
+  const [_key, search, selectedTypes] = queryKey; // queryKey: ["pokemons", search] 에서 값을 분리
   const limit = 20;
 
-  // URL에 검색어(name) 파라미터 추가
-  const response = await fetch(
-    `http://192.168.0.7:8000/pokemons/?offset=${pageParam}&limit=${limit}&name=${search}`,
-  );
+  // URLSearchParams를 사용하여 쿼리 파라미터를 구성합니다.
+  const params = new URLSearchParams({
+    offset: pageParam.toString(),
+    limit: limit.toString(),
+  });
 
+  // 검색어가 있을 때만 name 파라미터를 추가합니다.
+  if (search) {
+    params.append("name", search);
+  }
+
+  // 선택된 타입이 있을 때마다 type 파라미터를 추가합니다.
+  if (selectedTypes && selectedTypes.length > 0) {
+    selectedTypes.forEach((type: string) => {
+      params.append("type", type);
+    });
+  }
+
+  const url = `http://192.168.0.7:8000/pokemons/?${params.toString()}`;
+
+  console.log(url);
+
+  const response = await fetch(url);
   if (!response.ok) throw new Error("데이터 로드 실패");
   return response.json();
 };
 
-export const usePokemons = (search: string) => {
+export const usePokemons = ({ search, selectedTypes }: DebouncedParams) => {
   return useInfiniteQuery({
-    // ✅ 검색어(search)를 키에 포함시켜, 검색어가 바뀔 때마다 쿼리를 초기화하고 새로 요청합니다.
-    queryKey: ["pokemons", search],
+    // ✅ 검색조건들을 키에 포함시켜, 바뀔 때마다 쿼리를 초기화하고 새로 요청합니다.
+    queryKey: ["pokemons", search, selectedTypes],
     queryFn: fetchPokemons,
     initialPageParam: 0,
 
@@ -31,5 +54,8 @@ export const usePokemons = (search: string) => {
       }
       return nextOffset;
     },
+
+    // ✅ 검색어와 타입이 바뀌었을 때 기존 데이터를 유지하면서 새 데이터를 로드하도록 설정
+    placeholderData: (previousData) => previousData,
   });
 };
