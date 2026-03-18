@@ -13,18 +13,22 @@ import { useDebounce } from "../../hooks/useDebounce";
 import SearchBar from "../../components/SearchBar";
 import PokemonCard from "../../components/PokemonCard";
 import DetailModal from "../../components/DetailModal";
+import TypeFilter from "@/components/TypeFilter";
 
 export default function HomeScreen() {
   const { colors } = useThemeStore();
 
-  // 1. 상태 관리: 실시간 입력값과 선택된 포켓몬
+  // 검색어와 선택된 타입 상태 관리
   const [search, setSearch] = useState("");
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+
+  // 상세 모달을 위한 선택된 포켓몬 상태
   const [selectedPokemon, setSelectedPokemon] = useState<any>(null);
 
-  // 2. 디바운스 적용: 입력을 멈추고 0.5초 뒤에 debouncedSearch가 업데이트됨
-  const debouncedSearch = useDebounce(search, 500);
+  // 디바운스 적용: 입력을 멈추고 0.5초 뒤에 debouncedSearch가 업데이트됨
+  const debouncedSearch = useDebounce({ search, selectedTypes }, 500);
 
-  // 3. 서버 데이터 페칭: 디바운스된 검색어를 서버로 전달
+  // 서버 데이터 페칭: 디바운스된 검색어를 서버로 전달
   const {
     data,
     fetchNextPage,
@@ -34,17 +38,34 @@ export default function HomeScreen() {
     isError,
   } = usePokemons(debouncedSearch);
 
-  // 4. 데이터 가공: 여러 페이지로 나뉜 데이터를 하나의 배열로 합침
+  // 데이터 가공: 여러 페이지로 나뉜 데이터를 하나의 배열로 합침
   const allPokemons = useMemo(() => {
     return data?.pages.flatMap((page) => page.items) ?? [];
   }, [data]);
+
+  // 타입 토글 로직: 있으면 제거, 없으면 추가
+  const handleToggleType = (type: string) => {
+    setSelectedTypes((prev) =>
+      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type],
+    );
+  };
+
+  // 타입 초기화 로직
+  const handleClearTypes = () => setSelectedTypes([]);
 
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: colors.background }]}
     >
-      {/* 검색바: 사용자의 타이핑을 실시간으로 반영 */}
+      {/* 검색 바 */}
       <SearchBar value={search} onChangeText={setSearch} />
+
+      {/* 다중 선택 타입 필터 */}
+      <TypeFilter
+        selectedTypes={selectedTypes}
+        onToggleType={handleToggleType}
+        onClear={handleClearTypes}
+      />
 
       {isLoading ? (
         <View style={styles.center}>

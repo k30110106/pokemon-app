@@ -35,8 +35,11 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   input: {
-    padding: 12,
-    borderRadius: 15,
     fontSize: 16,
+    marginHorizontal: 16,
+    padding: 12,
+    backgroundColor: "#f5f5f5",
+    borderRadius: 10,
+    marginBottom: 10,
   },
 });
