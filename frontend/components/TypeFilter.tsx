@@ -6,6 +6,7 @@ import {
   StyleSheet,
   View,
 } from "react-native";
+import { POKEMON_TYPE_COLORS } from "../constants/Colors";
 
 // 포켓몬 타입 리스트 (필요에 따라 추가/수정 가능)
 const POKEMON_TYPES = [
@@ -62,7 +63,14 @@ export default function TypeFilter({
           return (
             <TouchableOpacity
               key={type}
-              style={[styles.chip, isSelected && styles.activeChip]}
+              style={[
+                styles.chip,
+                {
+                  backgroundColor: isSelected
+                    ? POKEMON_TYPE_COLORS[type]
+                    : "#f0f0f0",
+                },
+              ]}
               onPress={() => onToggleType(type)}
             >
               <Text style={[styles.text, isSelected && styles.activeText]}>

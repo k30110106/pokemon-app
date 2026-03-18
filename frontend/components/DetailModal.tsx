@@ -49,6 +49,14 @@ export default function DetailModal({
   const mainType = pokemon.types[0].toLowerCase();
   const themeColor = TYPE_COLORS[mainType] || "#777";
 
+  // 1. 실제 데이터 구조에 맞게 매핑 (백엔드 응답 예시: { hp: 80, attack: 120 ... })
+  const stats = [
+    { label: "HP", value: pokemon.hp || 0, max: 255 },
+    { label: "ATK", value: pokemon.attack || 0, max: 190 },
+    { label: "DEF", value: pokemon.defense || 0, max: 230 },
+    { label: "SPD", value: pokemon.speed || 0, max: 180 },
+  ];
+
   return (
     <Modal
       animationType="slide"
@@ -99,11 +107,7 @@ export default function DetailModal({
                 Base Stats
               </Text>
               {/* 예시 데이터: 나중에 DB에 HP, ATK 등이 추가되면 연결하세요! */}
-              {[
-                { label: "HP", value: 80 },
-                { label: "ATK", value: 120 },
-                { label: "DEF", value: 70 },
-              ].map((stat) => (
+              {stats.map((stat) => (
                 <View key={stat.label} style={styles.statRow}>
                   <Text style={[styles.statLabel, { color: colors.subText }]}>
                     {stat.label}
@@ -113,7 +117,9 @@ export default function DetailModal({
                       style={[
                         styles.statBarFill,
                         {
-                          width: `${(stat.value / 150) * 100}%`,
+                          // 최대치 대비 비율 계산
+                          width: `${Math.min((stat.value / stat.max) * 100, 100)}%`,
+                          // 테마 컬러를 쓰되, 수치가 낮으면 조금 더 투명하게 조절 가능
                           backgroundColor: themeColor,
                         },
                       ]}
@@ -124,6 +130,54 @@ export default function DetailModal({
                   </Text>
                 </View>
               ))}
+            </View>
+
+            {/* 진화 체인 */}
+            <View style={styles.evolutionContainer}>
+              <Text style={[styles.sectionTitle, { color: themeColor }]}>
+                Evolution Chain
+              </Text>
+
+              <View style={styles.evolutionRow}>
+                {/* 예시: 파이리 계열 (나중에 반복문으로 교체) */}
+                <View style={styles.evoItem}>
+                  <Image
+                    source={{ uri: pokemon.sprite }}
+                    style={styles.evoImage}
+                  />
+                  <Text style={[styles.evoName, { color: colors.text }]}>
+                    Charmander
+                  </Text>
+                </View>
+
+                <Text style={[styles.arrowText, { color: colors.subText }]}>
+                  →
+                </Text>
+
+                <View style={styles.evoItem}>
+                  <Image
+                    source={{ uri: pokemon.sprite }}
+                    style={styles.evoImage}
+                  />
+                  <Text style={[styles.evoName, { color: colors.text }]}>
+                    Charmeleon
+                  </Text>
+                </View>
+
+                <Text style={[styles.arrowText, { color: colors.subText }]}>
+                  →
+                </Text>
+
+                <View style={styles.evoItem}>
+                  <Image
+                    source={{ uri: pokemon.sprite }}
+                    style={styles.evoImage}
+                  />
+                  <Text style={[styles.evoName, { color: colors.text }]}>
+                    Charizard
+                  </Text>
+                </View>
+              </View>
             </View>
           </ScrollView>
         </View>
@@ -206,5 +260,39 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: "right",
     fontWeight: "bold",
+  },
+  evolutionContainer: {
+    width: "100%",
+    paddingHorizontal: 20,
+    marginTop: 30,
+  },
+  evolutionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "rgba(0,0,0,0.03)", // 아주 연한 배경
+    borderRadius: 15,
+    padding: 15,
+    marginTop: 10,
+  },
+  evoItem: {
+    alignItems: "center",
+    flex: 1,
+  },
+  evoImage: {
+    width: 60,
+    height: 60,
+  },
+  evoName: {
+    fontSize: 12,
+    fontWeight: "bold",
+    marginTop: 5,
+    textTransform: "capitalize",
+  },
+  arrowText: {
+    fontSize: 20,
+    fontWeight: "bold",
+    opacity: 0.3,
+    marginHorizontal: 5,
   },
 });

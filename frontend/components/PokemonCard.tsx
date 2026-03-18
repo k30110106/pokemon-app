@@ -1,26 +1,7 @@
 import React from "react";
 import { StyleSheet, Text, View, Image, TouchableOpacity } from "react-native";
 import { useThemeStore } from "@/store/useThemeStore"; // 테마 수신기
-
-// 타입별 색상 정의
-const TYPE_COLORS: { [key: string]: string } = {
-  fire: "#FF9C54",
-  water: "#4E90AF",
-  grass: "#7AC74C",
-  electric: "#F7D02C",
-  psychic: "#F95587",
-  ice: "#96D9D6",
-  dragon: "#6F35FC",
-  fairy: "#D685AD",
-  poison: "#A33EA1",
-  flying: "#A98FF3",
-  bug: "#A6B91A",
-  normal: "#A8A77A",
-  ground: "#E2BF65",
-  rock: "#B6A136",
-  steel: "#B7B7CE",
-  ghost: "#735797",
-};
+import { POKEMON_TYPE_COLORS } from "../constants/Colors";
 
 interface PokemonCardProps {
   item: any;
@@ -29,8 +10,11 @@ interface PokemonCardProps {
 
 export default function PokemonCard({ item, onPress }: PokemonCardProps) {
   const { colors } = useThemeStore();
+  const capitalized = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
+
   const mainType = item.types[0];
-  const backgroundColor = TYPE_COLORS[mainType] || "#f0f0f0";
+  const backgroundColor =
+    POKEMON_TYPE_COLORS[capitalized(mainType)] || "#f0f0f0";
 
   return (
     <TouchableOpacity
@@ -60,7 +44,10 @@ export default function PokemonCard({ item, onPress }: PokemonCardProps) {
           {item.types.map((t: string) => (
             <View
               key={t}
-              style={[styles.typeBadge, { backgroundColor: TYPE_COLORS[t] }]}
+              style={[
+                styles.typeBadge,
+                { backgroundColor: POKEMON_TYPE_COLORS[capitalized(t)] },
+              ]}
             >
               <Text style={styles.typeText}>{t}</Text>
               {/* 타입 텍스트는 배경이 유색이므로 흰색(#fff) 고정이 더 잘 보일 수 있습니다! */}
