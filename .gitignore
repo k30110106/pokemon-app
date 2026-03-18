@@ -17,3 +17,8 @@ backend/*.py[cod]
 .vscode/
 .idea/
 Thumbs.db
+
+# Python bytecode (어느 위치에 있든 모든 pycache 무시)
+**/__pycache__/
+*.py[cod]
+*$py.class
