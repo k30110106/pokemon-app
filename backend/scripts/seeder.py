@@ -22,6 +22,11 @@ async def fetch_and_save_pokemon():
             response = requests.get(f"{POKEAPI_URL}/{i}")
             data = response.json()
 
+            # [추가] PokeAPI의 stats 리스트를 파이썬 딕셔너리로 변환
+            # PokeAPI 구조: [{'base_stat': 45, 'stat': {'name': 'hp'}}, ...]
+            # 우리가 원하는 형태: {'hp': 45, 'attack': 49, ...}
+            stats_dict = {s["stat"]["name"]: s["base_stat"] for s in data["stats"]}
+
             # 우리가 필요한 데이터만 골라냅니다.
             pokemon_info = {
                 "id": data["id"],
@@ -33,7 +38,17 @@ async def fetch_and_save_pokemon():
                 "sprite": data["sprites"]["versions"]["generation-v"]["black-white"]["animated"]["front_default"] 
                           or data["sprites"]["front_default"],
                 "owned": False, # 기본값은 미보유
-                "lang_pref": "ko" # 기본 언어 설정
+                "lang_pref": "ko", # 기본 언어 설정
+                "stats": { 
+                    # PokeAPI에서 가져온 능력치를 우리가 원하는 형태로 저장합니다.
+                    # 만약 stats_dict에 해당 키가 없으면 0으로 기본값을 설정합니다.
+                    "hp": stats_dict.get("hp", 0),
+                    "attack": stats_dict.get("attack", 0),
+                    "defense": stats_dict.get("defense", 0),
+                    "speed": stats_dict.get("speed", 0),
+                },
+                # 진화 체인은 데이터 구조가 복잡하므로 일단 빈 리스트로 시작합니다.
+                "evolution_chain": []
             }
 
             # 기획서 전략: 멱등성(Upsert) 적용

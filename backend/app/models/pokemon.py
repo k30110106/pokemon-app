@@ -1,18 +1,43 @@
-from pydantic import BaseModel # 데이터의 타입을 강제하고, 유효성 검사를 자동으로 수행할 수 있습니다.
-from typing import List
+from pydantic import BaseModel
+from typing import List, Optional
 
-# 포켓몬 데이터의 "표준 양식"을 정의합니다.
+# 1. 능력치 모델
+class PokemonStats(BaseModel):
+    hp: int
+    attack: int
+    defense: int
+    speed: int
+
+# 2. 진화 단계 모델
+class EvolutionStep(BaseModel):
+    name: str
+    sprite: Optional[str] = None
+
+# 3. [클라이언트 응답용]
 class PokemonResponse(BaseModel):
     id: int
     name: str
     types: List[str]
     sprite: str
-    owned: bool
-    lang_pref: str
+    owned: bool        # 프론트엔드에서 체크박스나 아이콘 표시용
+    lang_pref: str     # 언어 설정 반영용
+    stats: Optional[PokemonStats] = None
+    evolution_chain: List[EvolutionStep] = []
 
-# 페이지네이션된 응답을 위한 모델입니다.
+# 4. [페이지네이션 응답용]
 class PaginatedPokemonResponse(BaseModel):
     total_count: int
     items: List[PokemonResponse]
     offset: int
     limit: int
+
+# 5. [실제 DB 저장용] - 모든 필드가 다 들어있어야 합니다!
+class Pokemon(BaseModel):
+    id: int
+    name: str
+    types: List[str]
+    sprite: str
+    owned: bool        # DB에 저장되어야 함
+    lang_pref: str     # DB에 저장되어야 함
+    stats: Optional[PokemonStats] = None
+    evolution_chain: List[EvolutionStep] = []

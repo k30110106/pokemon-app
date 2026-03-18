@@ -48,13 +48,13 @@ export default function DetailModal({
   // 첫 번째 타입을 기준으로 메인 테마 색상 결정 (없으면 기본값)
   const mainType = pokemon.types[0].toLowerCase();
   const themeColor = TYPE_COLORS[mainType] || "#777";
-
+  console.log(JSON.stringify(pokemon, null, 2));
   // 1. 실제 데이터 구조에 맞게 매핑 (백엔드 응답 예시: { hp: 80, attack: 120 ... })
   const stats = [
-    { label: "HP", value: pokemon.hp || 0, max: 255 },
-    { label: "ATK", value: pokemon.attack || 0, max: 190 },
-    { label: "DEF", value: pokemon.defense || 0, max: 230 },
-    { label: "SPD", value: pokemon.speed || 0, max: 180 },
+    { label: "HP", value: pokemon.stats?.hp || 0, max: 255 },
+    { label: "ATK", value: pokemon.stats?.attack || 0, max: 190 },
+    { label: "DEF", value: pokemon.stats?.defense || 0, max: 230 },
+    { label: "SPD", value: pokemon.stats?.speed || 0, max: 180 },
   ];
 
   return (
