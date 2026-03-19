@@ -1,184 +1,159 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
-  StyleSheet,
-  Text,
-  View,
   Modal,
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
   Pressable,
   Image,
-  ScrollView,
+  ActivityIndicator,
+  Dimensions,
 } from "react-native";
-import { useThemeStore } from "../store/useThemeStore";
+import { usePokemonDetail } from "../hooks/usePokemonDetail";
+import EvolutionSection from "./EvolutionSection";
 
+const { height: SCREEN_HEIGHT } = Dimensions.get("window");
+
+// 포켓몬 타입별 색상 매핑 (생략 없이 전체 기입)
 const TYPE_COLORS: { [key: string]: string } = {
-  fire: "#FF4422",
-  water: "#3399FF",
-  grass: "#77CC55",
-  electric: "#FFCC33",
-  poison: "#AA5599",
-  bug: "#AABB22",
-  flying: "#8899FF",
-  normal: "#AAAA99",
-  ground: "#DDBB55",
-  fairy: "#EE99EE",
-  psychic: "#FF5599",
-  fighting: "#BB5544",
-  rock: "#BBAA66",
-  ice: "#66CCFF",
-  dragon: "#7766EE",
-  ghost: "#6666BB",
-  steel: "#AAAABB",
+  fire: "#FF421C",
+  water: "#2C9BE3",
+  grass: "#62B957",
+  electric: "#FFDC31",
+  psychic: "#F55792",
+  ice: "#74D1F3",
+  dragon: "#4F60E2",
+  dark: "#4F4747",
+  fairy: "#ED91E7",
+  normal: "#919AA1",
+  fighting: "#CE4069",
+  flying: "#81A2E8",
+  poison: "#AA6BC8",
+  ground: "#D97746",
+  rock: "#B6A136",
+  bug: "#91A119",
+  ghost: "#5269AC",
+  steel: "#5A8EA1",
 };
-
-interface DetailModalProps {
-  isVisible: boolean;
-  pokemon: any;
-  onClose: () => void;
-}
 
 export default function DetailModal({
   isVisible,
-  pokemon,
+  pokemon: listPokemon,
   onClose,
-}: DetailModalProps) {
-  const { colors } = useThemeStore();
+}: any) {
+  const [currentId, setCurrentId] = useState<number | null>(null);
 
-  if (!pokemon) return null;
+  // 모달이 열릴 때 리스트에서 받은 ID로 초기화
+  useEffect(() => {
+    if (isVisible && listPokemon) {
+      setCurrentId(listPokemon.id);
+    }
+  }, [isVisible, listPokemon]);
 
-  // 첫 번째 타입을 기준으로 메인 테마 색상 결정 (없으면 기본값)
-  const mainType = pokemon.types[0].toLowerCase();
+  // 상세 데이터 fetch
+  const { data: pokemon, isFetching } = usePokemonDetail(currentId!, {
+    enabled: isVisible && !!currentId,
+    placeholderData: (prev: any) => prev,
+  });
+
+  const displayPokemon = pokemon || listPokemon;
+  if (!displayPokemon) return null;
+
+  const mainType = displayPokemon.types?.[0]?.toLowerCase() || "normal";
   const themeColor = TYPE_COLORS[mainType] || "#777";
-  console.log(JSON.stringify(pokemon, null, 2));
-  // 1. 실제 데이터 구조에 맞게 매핑 (백엔드 응답 예시: { hp: 80, attack: 120 ... })
-  const stats = [
-    { label: "HP", value: pokemon.stats?.hp || 0, max: 255 },
-    { label: "ATK", value: pokemon.stats?.attack || 0, max: 190 },
-    { label: "DEF", value: pokemon.stats?.defense || 0, max: 230 },
-    { label: "SPD", value: pokemon.stats?.speed || 0, max: 180 },
-  ];
 
   return (
     <Modal
-      animationType="slide"
-      transparent={true}
       visible={isVisible}
+      animationType="slide"
+      transparent
       onRequestClose={onClose}
     >
       <View style={styles.overlay}>
-        {/* 상단 배경을 타입 색상으로 강조 */}
-        <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
-          <View
-            style={[styles.headerBackground, { backgroundColor: themeColor }]}
-          />
+        <View style={styles.modalContent}>
+          {/* 로딩 표시 */}
+          {isFetching && (
+            <View style={styles.loaderContainer}>
+              <ActivityIndicator size="small" color={themeColor} />
+            </View>
+          )}
 
-          <Pressable style={styles.closeBtn} onPress={onClose}>
+          {/* 닫기 버튼 */}
+          <Pressable onPress={onClose} style={styles.closeBtn}>
             <Text style={styles.closeText}>✕</Text>
           </Pressable>
 
-          <ScrollView contentContainerStyle={styles.scrollContent}>
-            <View style={styles.imageContainer}>
+          <ScrollView showsVerticalScrollIndicator={false}>
+            {/* 상단 이미지 영역 */}
+            <View
+              style={[
+                styles.imageContainer,
+                { backgroundColor: themeColor + "20" },
+              ]}
+            >
               <Image
-                source={{ uri: pokemon.sprite }}
-                style={styles.largeImage}
+                source={{ uri: displayPokemon.sprite }}
+                style={styles.mainImage}
               />
             </View>
+            {/* 기본 정보 */}
+            <View style={styles.infoSection}>
+              <Text style={styles.idText}>
+                #{String(displayPokemon.id).padStart(3, "0")}
+              </Text>
+              <Text style={styles.nameText}>{displayPokemon.name}</Text>
 
-            <Text style={[styles.nameText, { color: colors.text }]}>
-              {pokemon.name}
-            </Text>
-
-            <View style={styles.typeRow}>
-              {pokemon.types.map((t: string) => (
-                <View
-                  key={t}
-                  style={[
-                    styles.typeBadge,
-                    { backgroundColor: TYPE_COLORS[t.toLowerCase()] || "#777" },
-                  ]}
-                >
-                  <Text style={styles.typeText}>{t.toUpperCase()}</Text>
-                </View>
-              ))}
+              <View style={styles.typeContainer}>
+                {displayPokemon.types?.map((type: string) => (
+                  <View
+                    key={type}
+                    style={[
+                      styles.typeBadge,
+                      { backgroundColor: TYPE_COLORS[type.toLowerCase()] },
+                    ]}
+                  >
+                    <Text style={styles.typeText}>{type.toUpperCase()}</Text>
+                  </View>
+                ))}
+              </View>
             </View>
-
-            {/* 능력치(Stats) 시각화 섹션 추가 */}
-            <View style={styles.statsContainer}>
+            {/* 스탯 섹션 */}
+            <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: themeColor }]}>
                 Base Stats
               </Text>
-              {/* 예시 데이터: 나중에 DB에 HP, ATK 등이 추가되면 연결하세요! */}
-              {stats.map((stat) => (
-                <View key={stat.label} style={styles.statRow}>
-                  <Text style={[styles.statLabel, { color: colors.subText }]}>
-                    {stat.label}
-                  </Text>
-                  <View style={styles.statBarBg}>
-                    <View
-                      style={[
-                        styles.statBarFill,
-                        {
-                          // 최대치 대비 비율 계산
-                          width: `${Math.min((stat.value / stat.max) * 100, 100)}%`,
-                          // 테마 컬러를 쓰되, 수치가 낮으면 조금 더 투명하게 조절 가능
-                          backgroundColor: themeColor,
-                        },
-                      ]}
-                    />
-                  </View>
-                  <Text style={[styles.statValue, { color: colors.text }]}>
-                    {stat.value}
-                  </Text>
-                </View>
-              ))}
+              {displayPokemon.stats &&
+                Object.entries(displayPokemon.stats).map(
+                  ([key, value]: [string, any]) => (
+                    <View key={key} style={styles.statRow}>
+                      <Text style={styles.statLabel}>{key.toUpperCase()}</Text>
+                      <View style={styles.statBarBg}>
+                        <View
+                          style={[
+                            styles.statBarFill,
+                            {
+                              width: `${(value / 150) * 100}%`,
+                              backgroundColor: themeColor,
+                            },
+                          ]}
+                        />
+                      </View>
+                      <Text style={styles.statValue}>{value}</Text>
+                    </View>
+                  ),
+                )}
             </View>
 
-            {/* 진화 체인 */}
-            <View style={styles.evolutionContainer}>
-              <Text style={[styles.sectionTitle, { color: themeColor }]}>
-                Evolution Chain
-              </Text>
-
-              <View style={styles.evolutionRow}>
-                {/* 예시: 파이리 계열 (나중에 반복문으로 교체) */}
-                <View style={styles.evoItem}>
-                  <Image
-                    source={{ uri: pokemon.sprite }}
-                    style={styles.evoImage}
-                  />
-                  <Text style={[styles.evoName, { color: colors.text }]}>
-                    Charmander
-                  </Text>
-                </View>
-
-                <Text style={[styles.arrowText, { color: colors.subText }]}>
-                  →
-                </Text>
-
-                <View style={styles.evoItem}>
-                  <Image
-                    source={{ uri: pokemon.sprite }}
-                    style={styles.evoImage}
-                  />
-                  <Text style={[styles.evoName, { color: colors.text }]}>
-                    Charmeleon
-                  </Text>
-                </View>
-
-                <Text style={[styles.arrowText, { color: colors.subText }]}>
-                  →
-                </Text>
-
-                <View style={styles.evoItem}>
-                  <Image
-                    source={{ uri: pokemon.sprite }}
-                    style={styles.evoImage}
-                  />
-                  <Text style={[styles.evoName, { color: colors.text }]}>
-                    Charizard
-                  </Text>
-                </View>
-              </View>
-            </View>
+            {/* 진화 섹션 (컴포넌트 분리) */}
+            {displayPokemon.evolution_chain && (
+              <EvolutionSection
+                chain={displayPokemon.evolution_chain}
+                currentId={currentId!}
+                onNodePress={(id) => setCurrentId(id)}
+                themeColor={themeColor}
+              />
+            )}
           </ScrollView>
         </View>
       </View>
@@ -189,70 +164,55 @@ export default function DetailModal({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
+    backgroundColor: "rgba(0,0,0,0.6)",
     justifyContent: "flex-end",
-    backgroundColor: "rgba(0,0,0,0.5)",
   },
   modalContent: {
-    height: "70%",
+    backgroundColor: "white",
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
+    height: SCREEN_HEIGHT * 0.85,
     padding: 20,
-    elevation: 10,
   },
-  closeBtn: { alignSelf: "flex-end", padding: 10 },
-  closeText: { fontSize: 24, fontWeight: "bold" },
-  scrollContent: { alignItems: "center", paddingBottom: 40 },
-  largeImage: { width: 200, height: 200 },
-  idText: { fontSize: 18, fontWeight: "bold", marginTop: 10 },
-  nameText: {
-    fontSize: 32,
-    fontWeight: "bold",
-    textTransform: "capitalize",
-    marginBottom: 15,
-  },
-  typeRow: { flexDirection: "row", marginBottom: 20 },
-  divider: { width: "100%", height: 2, marginVertical: 20 },
-  description: {
-    fontSize: 16,
-    lineHeight: 24,
-    textAlign: "center",
-    paddingHorizontal: 10,
-  },
-  headerBackground: {
+  loaderContainer: { position: "absolute", top: 25, right: 60, zIndex: 10 },
+  closeBtn: {
     position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 150,
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    opacity: 0.2, // 은은하게 배경색 노출
+    top: 20,
+    right: 20,
+    zIndex: 10,
+    padding: 5,
   },
+  closeText: { fontSize: 24, color: "#333", fontWeight: "bold" },
   imageContainer: {
-    marginTop: -20, // 이미지 살짝 위로
-    backgroundColor: "#fff",
-    borderRadius: 100,
-    padding: 10,
-    elevation: 5,
-  },
-  typeBadge: {
-    paddingHorizontal: 15,
-    paddingVertical: 6,
+    width: "100%",
+    height: 200,
     borderRadius: 20,
-    marginRight: 8,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 20,
   },
-  typeText: { fontSize: 12, color: "#fff", fontWeight: "bold" },
-  statsContainer: { width: "100%", paddingHorizontal: 20, marginTop: 20 },
-  sectionTitle: { fontSize: 20, fontWeight: "bold", marginBottom: 15 },
+  mainImage: { width: 180, height: 180 },
+  infoSection: { alignItems: "center", marginBottom: 25 },
+  idText: { fontSize: 16, color: "#888", fontWeight: "bold" },
+  nameText: {
+    fontSize: 28,
+    fontWeight: "bold",
+    color: "#333",
+    marginVertical: 5,
+  },
+  typeContainer: { flexDirection: "row", gap: 10, marginTop: 5 },
+  typeBadge: { paddingHorizontal: 15, paddingVertical: 5, borderRadius: 20 },
+  typeText: { color: "white", fontWeight: "bold", fontSize: 12 },
+  section: { marginTop: 10 },
+  sectionTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 15 },
   statRow: { flexDirection: "row", alignItems: "center", marginBottom: 10 },
-  statLabel: { width: 40, fontSize: 12, fontWeight: "bold" },
+  statLabel: { width: 50, fontSize: 12, fontWeight: "bold", color: "#666" },
   statBarBg: {
     flex: 1,
     height: 8,
-    backgroundColor: "#eee",
+    backgroundColor: "#EEE",
     borderRadius: 4,
     marginHorizontal: 10,
-    overflow: "hidden",
   },
   statBarFill: { height: "100%", borderRadius: 4 },
   statValue: {
@@ -260,39 +220,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: "right",
     fontWeight: "bold",
-  },
-  evolutionContainer: {
-    width: "100%",
-    paddingHorizontal: 20,
-    marginTop: 30,
-  },
-  evolutionRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: "rgba(0,0,0,0.03)", // 아주 연한 배경
-    borderRadius: 15,
-    padding: 15,
-    marginTop: 10,
-  },
-  evoItem: {
-    alignItems: "center",
-    flex: 1,
-  },
-  evoImage: {
-    width: 60,
-    height: 60,
-  },
-  evoName: {
-    fontSize: 12,
-    fontWeight: "bold",
-    marginTop: 5,
-    textTransform: "capitalize",
-  },
-  arrowText: {
-    fontSize: 20,
-    fontWeight: "bold",
-    opacity: 0.3,
-    marginHorizontal: 5,
   },
 });

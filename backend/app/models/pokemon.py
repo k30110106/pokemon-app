@@ -10,8 +10,9 @@ class PokemonStats(BaseModel):
 
 # 2. 진화 단계 모델
 class EvolutionStep(BaseModel):
+    id: int
     name: str
-    sprite: Optional[str] = None
+    sprites: List[str] = []
 
 # 3. [클라이언트 응답용]
 class PokemonResponse(BaseModel):

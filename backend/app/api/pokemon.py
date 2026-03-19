@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, HTTPException
 from typing import Optional
 from app.core.config import db
 from app.models.pokemon import PokemonResponse, PaginatedPokemonResponse
@@ -36,3 +36,12 @@ async def get_all_pokemons(
         "offset": offset,
         "limit": limit
     }
+
+# [GET] /pokemons/{pokemon_id} 주소로 요청이 오면 실행됩니다.
+@router.get("/{pokemon_id}", response_model=PokemonResponse)
+async def get_pokemon_by_id(pokemon_id: int):
+    pokemon = await db.pokemons.find_one({"id": pokemon_id})
+    if not pokemon:
+        raise HTTPException(status_code=404, detail="포켓몬을 찾을 수 없습니다.")
+    
+    return pokemon

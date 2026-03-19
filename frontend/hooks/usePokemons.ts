@@ -30,14 +30,13 @@ const fetchPokemons = async ({ pageParam = 0, queryKey }: any) => {
 
   const url = `http://192.168.0.7:8000/pokemons/?${params.toString()}`;
 
-  console.log(url);
-
   const response = await fetch(url);
   if (!response.ok) throw new Error("데이터 로드 실패");
   return response.json();
 };
 
 export const usePokemons = ({ search, selectedTypes }: DebouncedParams) => {
+  // useInfiniteQuery를 사용하여 무한 스크롤과 검색/필터링 기능을 구현합니다.
   return useInfiniteQuery({
     // ✅ 검색조건들을 키에 포함시켜, 바뀔 때마다 쿼리를 초기화하고 새로 요청합니다.
     queryKey: ["pokemons", search, selectedTypes],
