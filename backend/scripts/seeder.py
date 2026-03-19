@@ -2,100 +2,106 @@ import asyncio  # 비동기 처리를 위한 파이썬 기본 도구
 import requests # 인터넷에서 데이터를 가져오는 도구
 from motor.motor_asyncio import AsyncIOMotorClient # MongoDB 연결 도구
 
-# 1. 설정: 어디서 가져오고 어디에 저장할지 정합니다.
-POKEAPI_URL = "https://pokeapi.co/api/v2/pokemon"
-POKEAPI_SPECIES_URL = "https://pokeapi.co/api/v2/pokemon-species" # [추가] 종 정보 URL
-MONGO_URL = "mongodb://localhost:27017"
-DB_NAME = "pokedex"
+# 지원하는 언어 목록 (PokeAPI에서 다국어 이름을 가져올 때 사용)
+TARGET_LANGUAGE = ["ko", "en", "ja"]
 
-# 2. 진화 체인 데이터를 파싱하는 함수입니다.
+# PokeAPI URL 설정
+POKEAPI_URL = "https://pokeapi.co/api/v2/pokemon" # 포켓몬 기본 정보 URL
+POKEAPI_SPECIES_URL = "https://pokeapi.co/api/v2/pokemon-species" # 포켓몬 종 정보 URL
+POKEAPI_SPRITE_URL = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/animated" # 포켓몬 애니메이션 스프라이트 URL (gif 형식)
+
+# MongoDB 설정
+MONGO_URL = "mongodb://localhost:27017" # 로컬 MongoDB URL
+DB_NAME = "pokedex" # 사용할 데이터베이스 이름
+
+# 포켓몬 진화 체인 데이터를 리스트 형태로 변환하는 함수
+# TODO: 이브이와 같이 분기진화 케이스 발생, 단일 진화뿐만 아니라 분기 진화도 처리할 수 있도록 개선 필요
 def parse_evolution_chain(chain_data):
-    """
-    PokeAPI의 복잡한 트리 구조 진화 데이터를 리스트 형태로 변환합니다.
-    예: ['이상해씨', '이상해풀', '이상해꽃']
-    """
-    evolution_list = []
+    evolution_list = [] # 진화 체인 데이터를 저장할 리스트
     
+    # 재귀 함수를 사용하여 진화 체인을 순회하면서 데이터를 추출합니다.
     def extract_evolution(current_step):
-        # 현재 단계의 포켓몬 이름 저장
-        pokemon_id = int(current_step['species']['url'].split('/')[-2]) # URL에서 ID 추출
-        name = current_step['species']['name']
-        # 이미지는 나중에 프론트엔드에서 처리하거나 추가 API 호출이 필요하므로 우선 이름만!
+        pokemon_id = int(current_step['species']['url'].split('/')[-2]) # URL에서 포켓몬 ID 추출
+        name = current_step['species']['name'] # 포켓몬 이름 추출
+        sprite = f"{POKEAPI_SPRITE_URL}/{pokemon_id}.gif" # 포켓몬 애니메이션 이미지 URL 생성
+
+        # 현재 단계의 포켓몬 정보를 리스트에 추가합니다.
         evolution_list.append({
             "id": pokemon_id,
             "name": name,
-            "sprites": [f"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/animated/{pokemon_id}.gif",
-                       f"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{pokemon_id}.png"]
-                       
+            "sprite": sprite      
         })
         
-        # 다음 진화 단계가 있다면 재귀 호출
+        # 현재 단계에서 다음 진화 단계가 있다면 재귀적으로 호출하여 계속 추출합니다.
         for next_evolution in current_step['evolves_to']:
             extract_evolution(next_evolution)
-            
-    extract_evolution(chain_data)
+    
+    extract_evolution(chain_data) # 진화 체인의 시작점부터 추출을 시작합니다.
     return evolution_list
 
-# 3. 메인 함수: 데이터를 가져와서 MongoDB에 저장합니다.
+
+
+# 포켓몬 데이터를 PokeAPI에서 가져와 MongoDB에 저장하는 비동기 함수입니다.
 async def fetch_and_save_pokemon():
-    # MongoDB에 연결합니다.
-    client = AsyncIOMotorClient(MONGO_URL)
-    db = client[DB_NAME]
-    collection = db["pokemons"]
+    client = AsyncIOMotorClient(MONGO_URL) # MongoDB 클라이언트 생성
+    db = client[DB_NAME] # 사용할 데이터베이스 선택
+    collection = db["pokemons"] # 포켓몬 데이터를 저장할 컬렉션 이름
 
-    print("🚀 1~3세대 포켓몬 데이터 수집을 시작합니다...")
 
-    for i in range(1, 387):
-    # for i in range(1, 10): # [테스트용] 1~9번 포켓몬만 수집
+    print("🚀 1~2세대 포켓몬 데이터 수집을 시작합니다...")
+
+    # for i in range(1, 252): # 1~251번 포켓몬 수집 (1세대부터 2세대까지)
+    for i in range(1, 10): # [테스트용] 1~9번 포켓몬만 수집
         try:
-            # 1. 기본 포켓몬 정보 가져오기
+            # 포켓몬 기본 정보 가져오기
             response = requests.get(f"{POKEAPI_URL}/{i}")
             data = response.json()
-            stats_dict = {s["stat"]["name"]: s["base_stat"] for s in data["stats"]}
 
-            # 2. [신규] 진화 체인 정보 가져오기
-            # Species 정보를 먼저 가져와서 evolution_chain URL을 알아내야 합니다.
+            # 포켓몬 종 정보 가져오기 (진화체인, 다국어 이름)
             species_res = requests.get(f"{POKEAPI_SPECIES_URL}/{i}")
             species_data = species_res.json()
-            evo_url = species_data["evolution_chain"]["url"]
-            
-            evo_res = requests.get(evo_url)
-            evo_data = evo_res.json()
-            
-            # 재귀 함수를 통해 리스트로 변환
-            evolution_chain = parse_evolution_chain(evo_data["chain"])
 
-            # 3. 데이터 조립
+            # 진화 체인 URL에서 진화 체인 데이터를 가져와서 리스트 형태로 변환합니다.
+            # TODO: 이브이와 같이 분기진화 케이스 발생, 단일 진화뿐만 아니라 분기 진화도 처리할 수 있도록 개선 필요
+            evo_data = requests.get(species_data["evolution_chain"]["url"]).json()
+            evo_chain = parse_evolution_chain(evo_data["chain"]) # 재귀 함수를 통해 리스트로 변환
+
+            # 포켓몬 이름 데이터에서 지원하는 언어에 해당하는 이름만 딕셔너리로 추출합니다. 예시: {"ko": "이상해씨", "en": "Bulbasaur", "ja": "フシギダネ"}
+            name_data = species_data["names"]
+            name_dict = {item["language"]["name"]: item["name"] for item in name_data if item["language"]["name"] in TARGET_LANGUAGE} # 지원하는 언어에 해당하는 이름만 딕셔너리로 추출
+
+            # 포켓몬의 스탯 정보를 딕셔너리 형태로 변환하여 쉽게 접근할 수 있도록 합니다. 예시: {"hp": 45, "attack": 49, "defense": 49, "speed": 45}
+            stats_list = ["hp", "attack", "defense", "speed"] # 우리가 관심 있는 스탯 목록입니다.
+            stats_dict = {stat: next((item["base_stat"] for item in data["stats"] if item["stat"]["name"] == stat), 0) for stat in stats_list}
+
+            # 기타 데이터 추출
+            types = [item["type"]["name"] for item in data["types"]] # 포켓몬의 타입 정보를 리스트로 추출합니다. 예시: ["grass", "poison"]
+            sprite = data["sprites"]["versions"]["generation-v"]["black-white"]["animated"]["front_default"] # 포켓몬의 애니메이션 스프라이트 URL을 추출합니다.
+
+            # 포켓몬 정보를 MongoDB에 저장하기 위한 딕셔너리를 생성합니다.
             pokemon_info = {
                 "id": data["id"],
-                "name": data["name"],
+                "names": name_dict,
                 "height": data["height"],
                 "weight": data["weight"],
-                "types": [t["type"]["name"] for t in data["types"]],
-                "sprite": data["sprites"]["versions"]["generation-v"]["black-white"]["animated"]["front_default"] 
-                          or data["sprites"]["front_default"],
-                "owned": False,
-                "lang_pref": "ko",
-                "stats": {
-                    "hp": stats_dict.get("hp", 0),
-                    "attack": stats_dict.get("attack", 0),
-                    "defense": stats_dict.get("defense", 0),
-                    "speed": stats_dict.get("speed", 0),
-                },
-                "evolution_chain": evolution_chain # [수정] 빈 리스트 대신 실제 데이터 삽입
+                "types": types,
+                "sprite": sprite,
+                "stats": stats_dict,
+                "evolution_chain": evo_chain
             }
 
+            # MongoDB에 포켓몬 정보를 저장합니다. 기존에 같은 ID가 있으면 업데이트, 없으면 새로 삽입하도록 upsert 옵션을 사용합니다.
             await collection.update_one(
-                {"id": pokemon_info["id"]}, # 기존에 같은 ID가 있으면 업데이트, 없으면 새로 삽입
-                {"$set": pokemon_info}, # 업데이트할 때는 $set을 사용하여 필요한 필드만 업데이트하도록 변경
-                upsert=True # 업서트 옵션을 사용하여 존재하지 않는 경우 새로 삽입하도록 설정
+                {"id": pokemon_info["id"]}, # 업데이트할 문서를 찾는 조건입니다. 여기서는 포켓몬 ID로 찾습니다.
+                {"$set": pokemon_info}, # 업데이트할 내용을 지정합니다. 여기서는 전체 포켓몬 정보를 새로 설정합니다.
+                upsert=True # 만약 해당 ID의 문서가 없으면 새로 삽입하도록 하는 옵션입니다.
             )
 
             if i % 10 == 0:
                 print(f"✅ {i}번째 포켓몬 & 진화 데이터 저장 완료...")
             
+            # API 서버에 부담을 주지 않도록 잠시 대기합니다. (PokeAPI의 요청 제한을 고려하여 0.05초 대기)
             await asyncio.sleep(0.05)
-
         except Exception as e:
             print(f"❌ {i}번 수집 중 에러 발생: {e}")
 
