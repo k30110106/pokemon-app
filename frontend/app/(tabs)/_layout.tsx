@@ -1,6 +1,6 @@
 import React from "react";
 import { Tabs } from "expo-router";
-import { TabBarIcon } from "@/components/navigation/TabBarIcon"; // 경로 확인 필요
+import { TabBarIcon } from "@/components/navigation/TabBarIcon";
 
 export default function TabLayout() {
   return (

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 
 export function useDebounce<T>(value: T, delay: number): T {
+  // : T <<< 반환 타입을 명시
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
 
   useEffect(() => {

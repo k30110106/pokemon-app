@@ -7,12 +7,12 @@ import {
   ActivityIndicator,
   Text,
 } from "react-native";
-import { useThemeStore } from "../../store/useThemeStore";
-import { usePokemons } from "../../hooks/usePokemons";
-import { useDebounce } from "../../hooks/useDebounce";
-import SearchBar from "../../components/SearchBar";
-import PokemonCard from "../../components/PokemonCard";
-import DetailModal from "../../components/DetailModal";
+import { useThemeStore } from "@/store/useThemeStore";
+import { usePokemons } from "@/hooks/usePokemons";
+import { useDebounce } from "@/hooks/useDebounce";
+import SearchBar from "@/components/SearchBar";
+import PokemonCard from "@/components/PokemonCard";
+import DetailModal from "@/components/DetailModal";
 import TypeFilter from "@/components/TypeFilter";
 
 export default function HomeScreen() {
@@ -42,6 +42,8 @@ export default function HomeScreen() {
   const allPokemons = useMemo(() => {
     return data?.pages.flatMap((page) => page.items) ?? [];
   }, [data]);
+
+  console.log(JSON.stringify(allPokemons, null, 2));
 
   // 타입 토글 로직: 있으면 제거, 없으면 추가
   const handleToggleType = (type: string) => {
