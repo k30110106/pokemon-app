@@ -1,4 +1,4 @@
-import { PokemonDetail } from "@/types/pokemon";
+import { Pokemon } from "@/types/pokemon";
 import { useQuery } from "@tanstack/react-query";
 
 // 단일 포켓몬 상세 정보 fetch 함수
@@ -11,7 +11,7 @@ const fetchPokemonDetail = async (idOrName: number | string) => {
 
 // 상세 정보 커스텀 훅 (options 파라미터 추가)
 export const usePokemonDetail = (idOrName: number | string, options?: any) => {
-  return useQuery<PokemonDetail>({
+  return useQuery<Pokemon>({
     queryKey: ["pokemon", idOrName],
     queryFn: () => fetchPokemonDetail(idOrName),
     staleTime: 1000 * 60 * 5, // 5분간 신선도 유지

@@ -12,30 +12,9 @@ import {
 } from "react-native";
 import { usePokemonDetail } from "../hooks/usePokemonDetail";
 import EvolutionSection from "./EvolutionSection";
+import { POKEMON_TYPE_COLORS } from "@/constants/colors";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
-
-// 포켓몬 타입별 색상 매핑 (생략 없이 전체 기입)
-const TYPE_COLORS: { [key: string]: string } = {
-  fire: "#FF421C",
-  water: "#2C9BE3",
-  grass: "#62B957",
-  electric: "#FFDC31",
-  psychic: "#F55792",
-  ice: "#74D1F3",
-  dragon: "#4F60E2",
-  dark: "#4F4747",
-  fairy: "#ED91E7",
-  normal: "#919AA1",
-  fighting: "#CE4069",
-  flying: "#81A2E8",
-  poison: "#AA6BC8",
-  ground: "#D97746",
-  rock: "#B6A136",
-  bug: "#91A119",
-  ghost: "#5269AC",
-  steel: "#5A8EA1",
-};
 
 export default function DetailModal({
   isVisible,
@@ -61,7 +40,7 @@ export default function DetailModal({
   if (!displayPokemon) return null;
 
   const mainType = displayPokemon.types?.[0]?.toLowerCase() || "normal";
-  const themeColor = TYPE_COLORS[mainType] || "#777";
+  const themeColor = POKEMON_TYPE_COLORS[mainType] || "#777";
 
   return (
     <Modal
@@ -102,7 +81,7 @@ export default function DetailModal({
               <Text style={styles.idText}>
                 #{String(displayPokemon.id).padStart(3, "0")}
               </Text>
-              <Text style={styles.nameText}>{displayPokemon.name}</Text>
+              <Text style={styles.nameText}>{displayPokemon.names["en"]}</Text>
 
               <View style={styles.typeContainer}>
                 {displayPokemon.types?.map((type: string) => (
@@ -110,7 +89,10 @@ export default function DetailModal({
                     key={type}
                     style={[
                       styles.typeBadge,
-                      { backgroundColor: TYPE_COLORS[type.toLowerCase()] },
+                      {
+                        backgroundColor:
+                          POKEMON_TYPE_COLORS[type.toLowerCase()],
+                      },
                     ]}
                   >
                     <Text style={styles.typeText}>{type.toUpperCase()}</Text>

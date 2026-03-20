@@ -1,7 +1,7 @@
 import React from "react";
 import { StyleSheet, Text, View, Image, TouchableOpacity } from "react-native";
 import { useThemeStore } from "@/store/useThemeStore"; // 테마 수신기
-import { POKEMON_TYPE_COLORS } from "../constants/Colors";
+import { POKEMON_TYPE_COLORS } from "../constants/colors";
 
 interface PokemonCardProps {
   item: any;
@@ -13,8 +13,7 @@ export default function PokemonCard({ item, onPress }: PokemonCardProps) {
   const capitalized = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
 
   const mainType = item.types[0];
-  const backgroundColor =
-    POKEMON_TYPE_COLORS[capitalized(mainType)] || "#f0f0f0";
+  const backgroundColor = POKEMON_TYPE_COLORS[mainType] || "#f0f0f0";
 
   return (
     <TouchableOpacity
@@ -37,7 +36,7 @@ export default function PokemonCard({ item, onPress }: PokemonCardProps) {
 
         {/* 이름 텍스트: 기존 #444 대신 테마의 메인 텍스트 색상 사용 */}
         <Text style={[styles.nameText, { color: colors.text }]}>
-          {item.name}
+          {item.names["en"]}
         </Text>
 
         <View style={styles.typeRow}>
@@ -46,7 +45,7 @@ export default function PokemonCard({ item, onPress }: PokemonCardProps) {
               key={t}
               style={[
                 styles.typeBadge,
-                { backgroundColor: POKEMON_TYPE_COLORS[capitalized(t)] },
+                { backgroundColor: POKEMON_TYPE_COLORS[t] },
               ]}
             >
               <Text style={styles.typeText}>{t}</Text>

@@ -6,22 +6,22 @@ import {
   StyleSheet,
   View,
 } from "react-native";
-import { POKEMON_TYPE_COLORS } from "../constants/Colors";
+import { POKEMON_TYPE_COLORS } from "../constants/colors";
 
 // 포켓몬 타입 리스트 (필요에 따라 추가/수정 가능)
 const POKEMON_TYPES = [
-  "Grass",
-  "Fire",
-  "Water",
-  "Electric",
-  "Bug",
-  "Normal",
-  "Poison",
-  "Ground",
-  "Fairy",
-  "Fighting",
-  "Psychic",
-  "Rock",
+  "grass",
+  "fire",
+  "water",
+  "electric",
+  "bug",
+  "normal",
+  "poison",
+  "ground",
+  "fairy",
+  "fighting",
+  "psychic",
+  "rock",
 ];
 
 interface Props {

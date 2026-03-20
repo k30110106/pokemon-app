@@ -1,5 +1,5 @@
 import React from "react";
-import { EvolutionStep } from "../types/pokemon";
+import { PokemonEvolutionProps } from "@/types/pokemon";
 import {
   View,
   Text,
@@ -10,19 +10,19 @@ import {
 } from "react-native";
 
 interface Props {
-  chain: EvolutionStep[];
+  chain: PokemonEvolutionProps[];
   currentId: number;
   onNodePress: (id: number) => void;
   themeColor: string;
 }
 
+// TODO: 이브이와 같이 분기진화 케이스 발생, 단일 진화뿐만 아니라 분기 진화도 처리할 수 있도록 개선 필요
 export default function EvolutionSection({
   chain,
   currentId,
   onNodePress,
   themeColor,
 }: Props) {
-  // chain이 [이브이, 샤미드, 쥬피썬더...] 식의 배열인 경우
   if (!chain || chain.length === 0) return null;
 
   return (

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { StyleSheet, Text, TouchableOpacity, Image, View } from "react-native";
-import { EvolutionStep } from "../types/pokemon";
+import { PokemonEvolutionProps } from "@/types/pokemon";
 
 interface EvolutionItemProps {
-  step: EvolutionStep;
+  step: PokemonEvolutionProps;
   onPress: (id: number) => void;
   textColor: string;
 }
