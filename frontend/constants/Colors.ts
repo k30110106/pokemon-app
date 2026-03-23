@@ -1,4 +1,4 @@
-// 포켓몬 타입별 색상
+// 포켓몬 타입별 색상!
 export const POKEMON_TYPE_COLORS: { [key: string]: string } = {
   normal: "#A8A77A",
   fire: "#EE8130",
