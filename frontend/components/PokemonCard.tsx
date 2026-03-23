@@ -10,7 +10,6 @@ interface PokemonCardProps {
 
 export default function PokemonCard({ item, onPress }: PokemonCardProps) {
   const { colors } = useThemeStore();
-  const capitalized = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
 
   const mainType = item.types[0];
   const backgroundColor = POKEMON_TYPE_COLORS[mainType] || "#f0f0f0";

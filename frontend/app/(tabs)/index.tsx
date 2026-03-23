@@ -43,7 +43,7 @@ export default function HomeScreen() {
     return data?.pages.flatMap((page) => page.items) ?? [];
   }, [data]);
 
-  console.log(JSON.stringify(allPokemons, null, 2));
+  // console.log(JSON.stringify(allPokemons, null, 2));
 
   // 타입 토글 로직: 있으면 제거, 없으면 추가
   const handleToggleType = (type: string) => {

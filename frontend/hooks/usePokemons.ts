@@ -19,7 +19,7 @@ const fetchPokemons = async ({ pageParam = 0, queryKey }: any) => {
   // 선택된 타입이 있을 때마다 type 파라미터를 추가합니다.
   if (selectedTypes && selectedTypes.length > 0) {
     selectedTypes.forEach((type: string) => {
-      params.append("type", type);
+      params.append("types", type);
     });
   }
 

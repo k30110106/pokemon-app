@@ -2,6 +2,9 @@ import asyncio
 import requests # 인터넷에서 데이터를 가져오는 도구
 from motor.motor_asyncio import AsyncIOMotorClient # MongoDB 연결 도구
 
+# 포켓몬 세대번호 세팅 (+1)
+GENERATION_NUM = 152
+
 # 지원하는 언어 목록 (PokeAPI에서 다국어 이름을 가져올 때 사용)
 TARGET_LANGUAGE = ["ko", "en", "ja"]
 
@@ -32,12 +35,15 @@ def parse_evolution_chain(chain_node):
         "id": pokemon_id,
         "names": names_dict,
         "sprite": sprite,
-        "evolves_to": [] # 진화가 없는 포켓몬을 고려해서 초기값은 빈 값
+        "evolution_chain": [] # 진화가 없는 포켓몬을 고려해서 초기값은 빈 값
     }
     
     # 하위 진화체를 검색해서 재귀함수로 생성합니다.
+    # 진화체가 기준보다 세대가 높으면 PASS
     for item in chain_node['evolves_to']:
-        evolution_dict['evolves_to'].append(parse_evolution_chain(item))
+        extracted_id = int(item["species"]["url"].strip("/").split("/")[-1])
+        if extracted_id < GENERATION_NUM:
+            evolution_dict['evolution_chain'].append(parse_evolution_chain(item))
         
     return evolution_dict
 
@@ -51,8 +57,7 @@ async def fetch_and_save_pokemon():
 
     print("🚀 포켓몬 데이터 수집을 시작합니다...")
 
-    # for i in range(1, 252): # 1~251번 포켓몬 수집 (1세대부터 2세대까지)
-    for i in range(1, 134): # [테스트용]
+    for i in range(1, GENERATION_NUM): # 1~GENERATION_NUM+1 까지 수집
     # for i in [1, 133, 265, 280, 415]: # [테스트용] 분기진화 데이터 테스트
         try:
             # 포켓몬 기본 정보 가져오기
