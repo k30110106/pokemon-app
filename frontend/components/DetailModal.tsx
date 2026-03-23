@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Modal,
   View,
@@ -7,12 +7,12 @@ import {
   StyleSheet,
   Pressable,
   Image,
-  ActivityIndicator,
   Dimensions,
 } from "react-native";
 import { usePokemonDetail } from "../hooks/usePokemonDetail";
 import EvolutionSection from "./EvolutionSection";
 import { POKEMON_TYPE_COLORS } from "@/constants/colors";
+import { usePokemonStore } from "@/store/useEvolutionStore";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -21,7 +21,8 @@ export default function DetailModal({
   pokemon: listPokemon,
   onClose,
 }: any) {
-  const [currentId, setCurrentId] = useState<number | null>(null);
+  const scrollViewRef = useRef<ScrollView>(null); // 스크롤을 제어
+  const { currentId, setCurrentId } = usePokemonStore(); // 스토어에서 가져오기
 
   // 모달이 열릴 때 리스트에서 받은 ID로 초기화
   useEffect(() => {
@@ -31,10 +32,21 @@ export default function DetailModal({
   }, [isVisible, listPokemon]);
 
   // 상세 데이터 fetch
-  const { data: pokemon, isFetching } = usePokemonDetail(currentId!, {
+  const {
+    data: pokemon,
+    isLoading,
+    isFetching,
+  } = usePokemonDetail(currentId ?? 0, {
+    // isVisible: 모달이 열려있을 때만 호출 설정
     enabled: isVisible && !!currentId,
-    placeholderData: (prev: any) => prev,
   });
+
+  // 진화체인 포켓몬 선택 시 스크롤 처리
+  useEffect(() => {
+    if (!isLoading && pokemon) {
+      scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+    }
+  }, [isLoading, pokemon]);
 
   const displayPokemon = pokemon || listPokemon;
   if (!displayPokemon) return null;
@@ -52,18 +64,18 @@ export default function DetailModal({
       <View style={styles.overlay}>
         <View style={styles.modalContent}>
           {/* 로딩 표시 */}
-          {isFetching && (
+          {/* {isLoading && (
             <View style={styles.loaderContainer}>
               <ActivityIndicator size="small" color={themeColor} />
             </View>
-          )}
+          )} */}
 
           {/* 닫기 버튼 */}
           <Pressable onPress={onClose} style={styles.closeBtn}>
             <Text style={styles.closeText}>✕</Text>
           </Pressable>
 
-          <ScrollView showsVerticalScrollIndicator={false}>
+          <ScrollView ref={scrollViewRef} showsVerticalScrollIndicator={false}>
             {/* 상단 이미지 영역 */}
             <View
               style={[
@@ -100,6 +112,7 @@ export default function DetailModal({
                 ))}
               </View>
             </View>
+
             {/* 스탯 섹션 */}
             <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: themeColor }]}>
@@ -127,12 +140,10 @@ export default function DetailModal({
                 )}
             </View>
 
-            {/* 진화 섹션 (컴포넌트 분리) */}
+            {/* 진화 섹션 */}
             {displayPokemon.evolution_chain && (
               <EvolutionSection
-                chain={displayPokemon.evolution_chain}
-                currentId={currentId!}
-                onNodePress={(id) => setCurrentId(id)}
+                rootNode={displayPokemon.evolution_chain}
                 themeColor={themeColor}
               />
             )}

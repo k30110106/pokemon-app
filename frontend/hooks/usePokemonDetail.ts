@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 
 // 단일 포켓몬 상세 정보 fetch 함수
 const fetchPokemonDetail = async (idOrName: number | string) => {
-  const url = `http://192.168.0.7:8000/pokemons/${idOrName}`;
+  const url = `http://192.168.0.7:8000/pokemon/${idOrName}`;
   const response = await fetch(url);
   if (!response.ok) throw new Error("포켓몬 상세 정보 로드 실패");
   return response.json();
